@@ -1,0 +1,97 @@
+name = 'Bebete'
+description = ''
+core = '7.x'
+engine = 'phptemplate'
+screenshot = 'screenshot.png'
+base theme = 'omega'
+
+regions[header_left] = 'Header left'
+regions[header_right] = 'Header Right'
+regions[logo] = 'Logo'
+regions[branding] = 'Branding'
+regions[menu] = 'Menu'
+regions[highlight] = 'Highlight'
+regions[page_top] = 'Page Top'
+regions[content] = 'Content'
+regions[page_bottom] = 'Page Bottom'
+regions[sidebar_first] = 'Sidebar First'
+regions[sidebar_second] = 'Sidebar Second'
+regions[footer_middle] = 'Footer middle'
+
+zones[header] = 'Header'
+zones[branding] = 'Branding'
+zones[menu] = 'Menu'
+zones[highlight] = 'Highlight'
+zones[content] = 'Content'
+zones[content_bottom] = 'Content bottom'
+zones[footer] = 'Footer'
+
+css[global.css][name] = Bebete Style
+css[global.css][description] = Custom styles for Omega.
+
+libraries[bebete_js][name] = Bebete jquery
+libraries[bebete_js][description] = Custom js file for Bebete theme
+libraries[bebete_js][js][0][file] = bebete.js
+
+settings[alpha_grid] = 'alpha_default'
+settings[alpha_primary_alpha_default] = 'normal'
+settings[alpha_responsive] = '1'
+
+settings[alpha_layouts_alpha_fluid_primary] = 'normal'
+settings[alpha_layouts_alpha_fluid_normal_responsive] = '0'
+settings[alpha_layouts_alpha_fluid_normal_media] = 'all and (min-width: 740px) and (min-device-width: 740px), (max-device-width: 800px) and (min-width: 740px) and (orientation:landscape)'
+settings[alpha_layouts_alpha_default_primary] = 'normal'
+settings[alpha_layouts_alpha_default_fluid_responsive] = '0'
+settings[alpha_layouts_alpha_default_fluid_media] = 'all and (min-width: 740px) and (min-device-width: 740px), (max-device-width: 800px) and (min-width: 740px) and (orientation:landscape)'
+settings[alpha_layouts_alpha_default_fluid_weight] = '0'
+settings[alpha_layouts_alpha_default_narrow_responsive] = '1'
+settings[alpha_layouts_alpha_default_narrow_media] = 'all and (min-width: 740px) and (min-device-width: 740px), (max-device-width: 800px) and (min-width: 740px) and (orientation:landscape)'
+settings[alpha_layouts_alpha_default_narrow_weight] = '1'
+settings[alpha_layouts_alpha_default_normal_responsive] = '1'
+settings[alpha_layouts_alpha_default_normal_media] = 'all and (min-width: 980px) and (min-device-width: 980px), all and (max-device-width: 1024px) and (min-width: 1024px) and (orientation:landscape)'
+settings[alpha_layouts_alpha_default_normal_weight] = '2'
+settings[alpha_layouts_alpha_default_wide_responsive] = '1'
+settings[alpha_layouts_alpha_default_wide_media] = 'all and (min-width: 1220px)'
+settings[alpha_layouts_alpha_default_wide_weight] = '3'
+
+settings[alpha_viewport] = '1'
+settings[alpha_viewport_initial_scale] = '1'
+settings[alpha_viewport_min_scale] = '1'
+settings[alpha_viewport_max_scale] = '1'
+settings[alpha_viewport_user_scaleable] = ''
+
+settings[alpha_libraries][omega_formalize] = 'omega_formalize'
+settings[alpha_libraries][omega_equalheights] = ''
+settings[alpha_libraries][omega_mediaqueries] = 'omega_mediaqueries'
+
+settings[alpha_css][alpha-reset.css] = 'alpha-reset.css'
+settings[alpha_css][alpha-mobile.css] = 'alpha-mobile.css'
+settings[alpha_css][alpha-alpha.css] = 'alpha-alpha.css'
+settings[alpha_css][omega-text.css] = 'omega-text.css'
+settings[alpha_css][omega-branding.css] = 'omega-branding.css'
+settings[alpha_css][omega-menu.css] = 'omega-menu.css'
+settings[alpha_css][omega-forms.css] = 'omega-forms.css'
+settings[alpha_css][omega-visuals.css] = 'omega-visuals.css'
+settings[alpha_css][global.css] = 'global.css'
+
+settings[alpha_debug_block_toggle] = '1'
+settings[alpha_debug_block_active] = '1'
+settings[alpha_debug_grid_toggle] = '1'
+settings[alpha_debug_grid_active] = '1'
+settings[alpha_debug_grid_roles][1] = '1'
+settings[alpha_debug_grid_roles][2] = '2'
+settings[alpha_debug_grid_roles][3] = '3'
+
+settings[alpha_toggle_messages] = '1'
+settings[alpha_toggle_action_links] = '1'
+settings[alpha_toggle_tabs] = '1'
+settings[alpha_toggle_breadcrumb] = '1'
+settings[alpha_toggle_page_title] = '1'
+settings[alpha_toggle_feed_icons] = '1'
+
+settings[alpha_hidden_title] = ''
+settings[alpha_hidden_site_name] = ''
+settings[alpha_hidden_site_slogan] = ''
+
+
+version = '7.x'

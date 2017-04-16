@@ -1,0 +1,6 @@
+name = MakeMeWeb JCarousel Extras
+package = Makemeweb
+description = A basic skin for JCarousel
+core = 7.x
+version = "7.x-1.x-dev"
+files[] = mmw_jcarousel_extras.module

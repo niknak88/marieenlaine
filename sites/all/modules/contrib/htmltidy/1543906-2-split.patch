@@ -1,0 +1,22 @@
+diff --git a/htmltidy.module b/htmltidy.module
+index fadcef5..97afa8e 100644
+--- a/htmltidy.module
++++ b/htmltidy.module
+@@ -412,7 +412,7 @@ function htmltidy_run($input, $tidypath, $args, &$output, &$errors, &$warnings)
+
+     case 1:
+       $errors = array();
+-      foreach (array_filter(split("\n", $stderr)) as $line) {
++      foreach (array_filter(preg_split("/\n/", $stderr)) as $line) {
+         $warnings[] = trim($line);
+       }
+       $output = $stdout;
+@@ -421,7 +421,7 @@ function htmltidy_run($input, $tidypath, $args, &$output, &$errors, &$warnings)
+     case 2:
+       // separate errors and warnings into two different arrays
+
+-      foreach (array_filter(split("\n", $stdout)) as $line) {
++      foreach (array_filter(preg_split("/\n/", $stdout)) as $line) {
+         $line = trim($line);
+         if (preg_match('|^line \d+ column \d+ - Warning:|', $line)) {
+           $warnings[] = $line;

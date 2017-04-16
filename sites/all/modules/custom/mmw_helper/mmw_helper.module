@@ -1,0 +1,546 @@
+<?php 
+/**
+ * Implement hook menu
+ */
+function mmw_helper_menu() {
+
+	$items = array();
+
+	$items['admin/config/mmw_helper'] = array(
+			'title' => 'MakeMeWeb helper settings',
+			'description' => 'Description of your On this date settings page',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('mmw_helper_admin'),
+			'access arguments' => array('administer filters'),
+			'type' => MENU_NORMAL_ITEM,
+	);
+
+	return $items;
+}
+
+/**
+ * Add the formatter for the text type
+ *
+ */
+function mmw_helper_field_formatter_info_alter(&$info) {
+	$info['text_url'] = array(
+			'label' => t('Generic url field'),
+			'field types' => array('text'),
+			'module' => 'mmw_helper',
+			'settings' => array('label_text' => ''),
+	);
+	$info['textarea_nl2br'] = array(
+			'label' => t('Newline 2 br'),
+			'field types' => array('text_long', 'text_with_summary'),
+			'module' => 'mmw_helper',
+	);
+	$info['image_title'] = array(
+			'label' => t('Image with title'),
+			'field types' => array('image'),
+			'module' => 'mmw_helper',
+			'settings' => array('image_style' => '', 'image_link' => ''),
+	);
+	$info['cs_taxonomy_term_reference_link'] = array(
+			'label' => t('Comma separated links'),
+			'field types' => array('taxonomy_term_reference'),
+			'module' => 'mmw_helper',
+	);
+	$info['cs_node_reference'] = array(
+			'label' => t('Comma separated links'),
+			'field types' => array('node_reference'),
+			'module' => 'mmw_helper',
+	);
+// 	$info['date_time_ago'] = array(
+// 			'label' => t('Date Time Ago'),
+// 			'field types' => array('date','created','changed'),
+// 			'module' => 'mmw_helper',
+// 	);	
+}
+
+
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function mmw_helper_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  
+	$element = array();
+	$language = i18n_language_interface();	
+	switch ($display['type']) {
+		/* make a text field display a url */
+		case 'text_url':
+	        foreach ($items as $delta => $item) {
+	        		
+	        		if(trim($display['settings']['label_text']) != '') {
+	        			$label = t($display['settings']['label_text']);
+	        		} else {
+	        			$label = $item['value'];
+	        		}
+	        	
+              $element[$delta] = array('#markup' => l($label, 'http://'.str_replace('http://','',$item['value']), array('attributes' => array('target'=>'_blank'))));
+            }
+			break;
+		case 'textarea_nl2br':
+	        foreach ($items as $delta => $item) {
+              $element[$delta] = array('#markup' => nl2br($item['value']));
+            }
+			break;
+// 		case 'date_time_ago':
+// 	        foreach ($items as $delta => $item) {
+//               $element[$delta] = array('#markup' => t('%time ago', array('%time' => format_interval(time() - $item['value']))));
+//             }
+// 			break;
+		case 'image_title':
+	
+			// Check if the formatter involves a link.
+			if ($display['settings']['image_link'] == 'content') {
+				$uri = entity_uri($entity_type, $entity);
+			}
+			elseif ($display['settings']['image_link'] == 'file') {
+				$link_file = TRUE;
+			}
+		
+			foreach ($items as $delta => $item) {
+				if (isset($link_file)) {
+					$uri = array(
+							'path' => file_create_url($item['uri']),
+							'options' => array(),
+					);
+				}
+				$element[$delta] = array(
+						'#theme' => 'mmw_helper_formatter',
+						'#item' => $item,
+						'#image_style' => $display['settings']['image_style'],
+						'#path' => isset($uri) ? $uri : '',
+				);
+			}
+			break;
+		/* display a list of i18n taxonomy terms as links, comma separated */	
+		case 'cs_taxonomy_term_reference_link':
+// 			dpm($entity_type);
+// 			dpm($entity);
+// 			dpm($field, '$field');
+// 			dpm($instance['widget'], '$instance');
+// 			dpm($display, '$display');
+	      foreach ($items as $delta => $item) {
+            if ($item['tid'] == 'autocreate') {
+              $rows[$delta] = array(
+                '#markup' => check_plain($item['name']),
+              );
+            } else {
+              $term = $item['taxonomy_term'];
+              $uri = entity_uri('taxonomy_term', $term);
+              $rows[$delta] = l(i18n_taxonomy_term_name($term, $language->language),$uri['path'],$uri['options']);
+            }
+          }
+          if(!empty($rows)) {
+            $element[0] = array('#markup' => implode(', ', $rows)); // return a string instead of array of links so it can be comma separated
+          }
+		break;
+		/* display a list of node references as links, comma separated */
+		case 'cs_node_reference':
+		  foreach ($items as $delta => $item) {
+		  	if ($item['access']) {
+		  		$node = $item['node'];
+		  		$label = entity_label('node', $node);
+                $uri = entity_uri('node', $node);
+                $rows[$delta] = l($label,$uri['path'],$uri['options']);
+		  		if (!$node->status) {
+		  			$rows[$delta]['#prefix'] = '<span class="node-unpublished">';
+		  			$rows[$delta]['#suffix'] = '</span>';
+		  		}
+		  	}
+		  }
+		  if(!empty($rows)) {
+		  	$element[0] = array('#markup' => implode(', ', $rows)); // return a string instead of array of links so it can be comma separated
+		  }		  
+		 break;		  
+
+	}
+
+	return $element;
+}
+
+
+/**
+ - * Implements hook_field_formatter_prepare_view().			dpm($field);
+			dpm($instance);
+			dpm($view_mode);
+ - *
+ - */
+function mmw_helper_field_formatter_prepare_view($entity_type, $entities, $field, $instances, $langcode, &$items, $displays) {
+	switch($field['type']) {
+		case 'taxonomy_term_reference':
+			return i18n_taxonomy_field_formatter_prepare_view($entity_type, $entities, $field, $instances, $langcode, $items, $displays);
+	  break;
+		case 'node_reference':
+			return node_reference_field_formatter_prepare_view($entity_type, $entities, $field, $instances, $langcode, $items, $displays);
+			break;
+	}
+}
+
+
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ *
+ * Near duplicate of image_field_formatter_settings_summary()
+ */
+function mmw_helper_field_formatter_settings_summary($field, $instance, $view_mode) {
+	
+	$display = $instance['display'][$view_mode];
+	$type = $display['type'];
+	$settings = $display['settings'];
+	$summary = array();
+
+	switch($type) {
+		case 'text_url':
+			$summary[] = t('Url label');
+			break;
+		case 'textarea_nl2br':
+			break;
+		case 'cs_taxonomy_term_reference_link':
+			break;			dpm($field);
+			dpm($instance);
+			dpm($view_mode);
+		case 'cs_node_reference':
+			break;
+		case 'image_title':	
+			$image_styles = image_style_options(FALSE);
+			// Unset possible 'No defined styles' option.
+			unset($image_styles['']);
+			// Styles could be lost because of enabled/disabled modules that defines
+			// their styles in code.
+			if (isset($image_styles[$settings['image_style']])) {
+				$summary[] = t('Image style: @style', array('@style' => $image_styles[$settings['image_style']]));
+			}
+			else {
+				$summary[] = t('Original image');
+			}
+		
+			$link_types = array(
+					'content' => t('Linked to content'),
+					'file' => t('Linked to file'),
+			);
+			// Display this setting only if image is linked.
+			if (isset($link_types[$settings['image_link']])) {
+				$summary[] = $link_types[$settings['image_link']];
+			}
+			break;
+		default:
+
+	}
+	if(!empty($summary)) {
+		return implode('<br />', $summary);
+	} 
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ *
+ * Near duplicate of image_field_formatter_settings_form()
+ */
+function mmw_helper_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form) {
+
+	$display = $instance['display'][$view_mode];
+	$settings = $display['settings'];
+	
+	$type = $display['type'];
+	
+	switch($type) {
+		case 'text_url':
+			$element['label_text'] = array(
+					'#title' => t('URL text'),
+					'#type' => 'textfield',
+					'#description' => t('Label for url, if empty url will be displayed'),
+					'#default_value' => $settings['label_text'],
+			);			
+			break;
+		case 'textarea_nl2br':
+			break;
+		case 'cs_taxonomy_term_reference_link':
+			break;
+		case 'cs_node_reference':
+			break;
+		case 'image_title':
+				$image_styles = image_style_options(FALSE);
+				$element['image_style'] = array(
+						'#title' => t('Image style'),
+						'#type' => 'select',
+						'#default_value' => $settings['image_style'],
+						'#empty_option' => t('None (original image)'),
+						'#options' => $image_styles,
+				);
+				
+				$link_types = array(
+						'content' => t('Content'),
+						'file' => t('File'),
+				);
+				$element['image_link'] = array(
+						'#title' => t('Link image to'),
+						'#type' => 'select',
+						'#default_value' => $settings['image_link'],
+						'#empty_option' => t('Nothing'),
+						'#options' => $link_types,
+				);
+				break;
+		default:
+		
+	}
+	if($element) {
+		return $element;
+	}
+}
+
+/**
+ * Implements hook_theme().
+ */
+function mmw_helper_theme() {
+	return array(
+			'mmw_helper_formatter' => array(
+					'variables' => array('item' => NULL, 'path' => NULL, 'image_style' => NULL),
+			),
+			'pseudo_field' => array(
+					'render element' => 'element',
+			),			
+	);
+}
+
+/**
+ * Returns HTML for an image caption field formatter.
+ *
+ * @param $variables
+ *   An associative array containing:
+ *   - item: An array of image data.
+ *   - image_style: An optional image style.
+ *   - path: An array containing the link 'path' and link 'options'.
+ *
+ * @ingroup themeable
+ *
+ * Near duplicate of theme_image_formatter()
+ */
+function theme_mmw_helper_formatter($variables) {
+	$item = $variables['item'];
+	$image = array(
+			'path' => $item['uri'],
+			'alt' => $item['alt'],
+	);
+	// Do not output an empty 'title' attribute.
+	if (drupal_strlen($item['title']) > 0) {
+		$image['title'] = $item['title'];
+	}
+
+	if ($variables['image_style']) {
+		$image['style_name'] = $variables['image_style'];
+		$output = theme('image_style', $image);
+	}
+	else {
+		$output = theme('image', $image);
+	}
+
+	if ($variables['path']) {
+		$path = $variables['path']['path'];
+		$options = $variables['path']['options'];
+		// When displaying an image inside a link, the html option must be TRUE.
+		$options['html'] = TRUE;
+		$output = l($output, $path, $options);
+	}
+
+	if ($image['title']) {
+		$output = mmw_helper_caption($output, $image['title']);
+	}
+	return $output;
+}
+
+function mmw_helper_caption($image, $title) {
+	$attributes = array();
+	$attributes['class'] = 'imgcaption';
+
+	return $image . '<div ' . drupal_attributes($attributes) . '>' . $title . '</div>';
+}
+
+// function mmw_helper_watchdog($var) {
+//   if( in_array( $var['severity'] ,array(WATCHDOG_EMERGENCY,WATCHDOG_EMERGENCY, WATCHDOG_ALERT, WATCHDOG_CRITICAL, WATCHDOG_ERROR))) {
+    
+//     $error = $var;
+//     unset($error['user'],$error['ip'],$error['timestamp']);
+// 			mmw_helper_logit($error);
+//   }
+// }
+
+/**
+ * Simple devlog to write to file
+ * @param unknown_type $var
+ */
+function mmw_helper_logit($var) {
+	if (is_array($var))
+	{
+		ob_start();
+		var_dump($var);
+		$var = ob_get_contents();
+		ob_end_clean();
+	}
+
+	$error = date('j/m/Y H:i:s')." :\t".$var."\n";
+
+	error_log($error, 3, 'dev.error.log');
+}
+
+/**
+ * Used for creating a vocubulary, to be used in a hook install or enable
+ * @param string $machine_name
+ * @param string $module
+ * @param string $label 
+ * @param string $desc
+ * @return int vid ( vocabulary id )
+ */
+function _mmw_helper_create_vocabulary($machine_name, $module = 'mmw_helper', $label = '', $desc = '') {
+	$vocabulary = taxonomy_vocabulary_machine_name_load($machine_name);
+	$vid = $vocabulary->vid;
+	if (!$vid) {
+		$vocabulary = array(
+				'name' => t($label),
+				'machine_name' => $machine_name,
+				'description' => t($desc),
+				'hierarchy' => 1,
+				'module' => $module,
+				'weight' => 1
+		);
+		$vocabulary = (object) $vocabulary;
+		taxonomy_vocabulary_save($vocabulary);
+		$vid = $vocabulary->vid;
+	}
+	return $vid;
+}
+
+/**
+ * Used for creating a taxonomy term, to be used in a hook install or enable
+ * @param int $vid Vocabulary id
+ * @param string $label
+ * @param int $parent ( optional parent term tid )
+ */
+function _mmw_helper_create_term($vid, $label, $parent = 0) {
+  $obj = new stdClass();
+  $obj->vid = $vid;
+  $obj->name = $label;
+  $obj->parent = $parent;
+  $obj->description = '';
+  taxonomy_term_save((object)$obj);
+}
+
+
+/**
+ * Return array of options for select field for a vocabulary
+ * @param string $vocabname
+ * @return array();
+ */
+function _mmw_helper_vocab_to_options($vocabname) {
+	$terms = array();
+	$vocabulary = taxonomy_vocabulary_machine_name_load($vocabname);
+	if($vocabulary->vid) {
+		foreach(taxonomy_get_tree($vocabulary->vid) as $term) {
+			$terms[$term->tid] = $term->name;
+		}
+	}
+	return $terms;
+}
+
+/**
+ * Open external links in _blank
+ * @param unknown_type $item
+ */
+function mmw_helper_menu_link_alter(&$item)
+{
+	
+	if(stristr($item['link_path'],'http://'))
+	{
+		$item['options']['attributes']['target'] = '_blank';
+		drupal_set_message(t('Added target _blank to external link'));
+	}
+}
+
+/**
+ * 
+ * @param string $content
+ * @param string $target ( jquery style selector
+ * @param array extra drupal ajax commands
+ */
+function mmw_helper_ajax_return($content,$target,$extraCommands = array()) {
+		$commands[] = ajax_command_replace($target, $content );
+		if(!empty($extraCommands)) {
+			foreach($extraCommands as $command) {
+				$commands[] = $command;
+			}
+		}
+		$page = array('#type' => 'ajax', '#commands' => $commands);
+		ajax_deliver($page);	
+}
+
+/**
+ * Redirect when forwarding from ajax
+ * @param unknown_type $path
+ */
+function mmw_helper_ajax_redirect($path) {
+	ctools_include('ajax');
+	ctools_add_js('ajax-responder');
+	$commands[] = ctools_ajax_command_redirect($path);
+	print ajax_render($commands);
+	drupal_exit();	
+}
+
+
+
+/**
+ * Theme output of a pseudo_field.
+ */
+function theme_pseudo_field($variables) {
+	if (isset($variables['element']['#label_display']) && $variables['element']['#label_display'] == 'inline') {
+		$output = '
+		<div class="field field-label-inline clearfix">
+		<div class="field-label">'.$variables['element']['#label'].'</div>
+		<div class="field-items">'.$variables['element']['#field'].'</div>
+		</div>';
+	} else {
+		$output = '
+		<div class="field">
+		<div class="field-label">'.$variables['element']['#label'].'</div>
+		<div class="field-items">'.$variables['element']['#field'].'</div>
+		</div>';
+	}
+	return $output;
+}
+
+
+/**
+ *  Used to debug EntityFieldQuery
+ *  Add $query->addTag('efq_debug'); before $query->execute();
+ */
+function mmw_helper_query_alter($query) {
+	if ($query->hasTag('efq_debug')) {
+		dpm((string)$query);
+	}
+}
+
+/**
+ * Implement admin settings form
+ */
+function mmw_helper_admin() {
+	$form = array();
+
+	$form['mmw_helper_tinymce'] = array(
+			'#type' => 'checkbox',
+			'#title' => t('Enable TinyMCE styles'),
+			'#default_value' => variable_get('mmw_helper_tinymce', 0),
+			'#description' => t("Don't forget to set the \"Css Path\" to /sites/all/modules/custom/mmw_helper/css/tinymce.css in admin/config/content/wysiwyg/profile/filtered_html/edit."),
+			'#required' => FALSE,
+	);
+
+	return system_settings_form($form);
+}
+
+function mmw_helper_preprocess_html(&$variables) {
+	$tinymce = variable_get('mmw_helper_tinymce', FALSE);
+	if($tinymce) {
+		drupal_add_css(drupal_get_path('module', 'mmw_helper') . '/css/tinymce.css');
+	}
+}

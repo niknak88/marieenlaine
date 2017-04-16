@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmlrequest>
+    <username></username>
+    <usertoken></usertoken>
+    <requesttype>lists</requesttype>
+    <requestmethod>GetListByUserID</requestmethod>
+    <details>
+        <userid></userid>
+    </details>
+</xmlrequest>

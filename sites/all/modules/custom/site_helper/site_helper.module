@@ -1,0 +1,97 @@
+<?php
+
+function site_helper_block_info() {
+  $blocks = array();
+  // This example comes from node.module.
+  $blocks['related_node'] = array(
+    'info' => t('Related'),
+    'cache' => DRUPAL_NO_CACHE,
+  );
+  return $blocks;
+}
+  
+function site_helper_block_view($delta = '') {
+  $block = array();
+
+  switch ($delta) {
+    case 'related_node':
+      $block['subject'] = t('Related');
+      $block['content'] = site_helper_get_related_project(arg(1));
+      break;
+  }
+  return $block;
+}
+
+/**
+* Implements hook_menu()
+*/
+function site_helper_menu($items = array()) {
+ $items = array();
+ $items['work/%'] = array(
+  'page callback' => 'site_helper_page_callback', //The name of the function that will output a page
+   'access callback' => TRUE,
+ );
+ 
+ return $items;
+}
+
+function site_helper_page_callback() {
+ //The argument is the name of the function with the form details
+ return drupal_get_form('site_helper_form');
+}
+
+function site_helper_form($form, $form_state) {
+  $form['onoffswitch'] = array(
+   '#type' => 'checkbox',
+   '#title' =>  '<div class="onoffswitch-inner"></div><div class="onoffswitch-switch"></div>' ,
+   '#suffix' => '<div class="suffix-onoffswitch">'.t('Tous les afficher').'</div>',
+   '#default_value' => 0,
+   '#required' => false,
+   '#ajax' => array(
+     'callback' => 'site_helper_ajax_callback',
+     'wrapper' => 'checkboxes-div',
+     'method' => 'replace',
+     ),
+ );
+  $form['arg_hidden_categ'] = array(
+      '#type' => 'hidden',
+  '#value' => arg(1),
+  );
+$form['reloaded'] = array(
+   '#title' => t("Generated Checkboxes"),
+    '#prefix' => '<div id="checkboxes-div">',
+    '#suffix' => '</div>',
+    '#markup' => site_helper_get_view_theme('pager', arg(1)),
+    '#description' => t('This is where we get automatically generated checkboxes'),
+ );
+ return $form;
+}
+
+function site_helper_ajax_callback($form, $form_state){
+  $output = '<div id="checkboxes-div">';
+  if($form_state['values']['onoffswitch'] == 1){
+    $output .= site_helper_get_view_theme($type = 'all', $form_state['values']['arg_hidden_categ']);
+  }else{
+    $output .= site_helper_get_view_theme($type = 'pager', $form_state['values']['arg_hidden_categ']);
+  }
+  $output .= '</div>';
+  return $output;
+}
+
+function site_helper_get_view_theme($type = 'pager', $arg = ''){
+  $cid = "all";
+  $cat_objects = taxonomy_get_tree(1);
+  foreach($cat_objects as $cat_object){
+    $path = explode("/", drupal_get_path_alias("taxonomy/term/".$cat_object->tid));
+    if($path[0] == $arg){
+      $cid = $cat_object->tid;
+      break;
+    }
+  }
+  return views_embed_view('thematic', $type, $cid);
+}
+
+function site_helper_get_related_project($nid){
+  $node = node_load($nid);
+  return views_embed_view('related_node', 'default', $node->field_category['und'][0]['tid']);
+}

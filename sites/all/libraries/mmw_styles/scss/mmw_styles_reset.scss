@@ -1,0 +1,89 @@
+@import 'mmw_styles_base';
+
+/*
+ * DOM styles
+ */
+body, 
+input, 
+textarea, 
+select, 
+.ui-widget {
+  color:$mmw_t_color;
+  font: $mmw_t;
+}
+p, li {
+  line-height:1.5em;
+}
+a {
+  color: $mmw_c_1;
+  text-decoration: none;
+  &:hover, 
+  &:focus {
+    text-decoration: underline;    
+  }
+}
+// anti-omega style
+h1, h2, h3, h4, h5, h6 {
+  font: $mmw_t;
+  letter-spacing:inherit;
+}
+.menu {
+  margin-left:8px;
+}
+ul.inline {
+  li {
+    &.first, 
+    &:first-child {
+      padding-left:0;
+    } 
+  }
+} 
+// titles system
+h1, 
+#page-title, 
+.page-title {
+  @include makeMeTitle($mmw_t_title_1);  
+}
+h2 {
+  @include makeMeTitle();  
+}
+// extras
+.hide {
+  display:none;
+}
+/*
+ * DRUPALize-me
+ */
+// BLOCK
+.block {
+  margin-bottom:$mmw_l_gutter;
+} 
+.block-title {
+  @include makeMeTitle();
+}
+// FIELDS
+.field-read-more {
+  @include makeMeReadmore();
+}
+.field-name-node-link {
+  a {
+    @include makeMeReadmore();      
+  }
+}
+.field-name-title, 
+.field-title {
+  @include makeMeTitle();
+  @include makeMeLink();
+}
+// VIEWS
+.view {
+  .button {
+    @include makeMeReadmore();
+  }
+} 
+// EXTRAS
+.node-readmore {
+  a {
+    @include makeMeReadmore();    
+  }
+}

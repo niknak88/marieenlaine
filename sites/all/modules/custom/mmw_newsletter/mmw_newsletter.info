@@ -1,0 +1,7 @@
+name = Makemeweb Newsletter (Interspire)
+description = Makemeweb Webservice for Interspire
+core = 7.x
+version = "7.x-1"
+core = "7.x"
+dependencies[] = views
+files[] = mmw_newsletter.views_default.inc

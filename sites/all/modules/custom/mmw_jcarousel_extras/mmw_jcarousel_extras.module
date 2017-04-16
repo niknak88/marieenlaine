@@ -1,0 +1,19 @@
+<?php
+/**
+ * Implements hook_jcarousel_skin_info().
+ */
+function mmw_jcarousel_extras_jcarousel_skin_info() {
+  $skins = array();
+ 
+  $skins['basic'] = array(
+    'title' => t('basic skin'),
+    'file' => 'skins/basic/basic.css',
+  );
+
+$skins['tennis'] = array(
+    'title' => t('Net Tennis Pros'),
+    'file' => 'skins/tennis/css/tennis.css',
+);
+ 
+  return $skins;
+}

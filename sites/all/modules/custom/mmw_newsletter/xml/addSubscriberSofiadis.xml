@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmlrequest>
+    <username></username>
+    <usertoken></usertoken>
+    <requesttype>subscribers</requesttype>
+    <requestmethod>AddSubscriberToList</requestmethod>
+    <details>
+        <emailaddress></emailaddress>
+        <mailinglist>19</mailinglist>
+        <customfields>
+            <item>
+                <fieldid>32</fieldid>
+                <value>Lastname here</value>
+            </item>
+            <item>
+                <fieldid>2</fieldid>
+                <value>Firstname here</value>
+            </item>
+            <item>
+                <fieldid>4</fieldid>
+                <value>phone here</value>
+            </item>
+            <item>
+                <fieldid>12</fieldid>
+                <value>Language</value>
+            </item>
+            <item>
+                <fieldid>37</fieldid>
+                <value>Language</value>
+            </item>
+            <item>
+                <fieldid>36</fieldid>
+                <value>patients</value>
+            </item>
+            <item>
+                <fieldid>3</fieldid>
+                <value>Name</value>
+            </item>
+            <item>
+                <fieldid>48</fieldid>
+                <value></value>
+            </item>
+            <item>
+                <fieldid>49</fieldid>
+                <value></value>
+            </item>
+        </customfields>
+        <format>html</format>
+        <confirmed>yes</confirmed>
+        <status>a</status>
+        <unsubscribed>0</unsubscribed>
+    </details>
+</xmlrequest>

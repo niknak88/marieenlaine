@@ -1,0 +1,140 @@
+/*
+ * VARIABLES
+ */
+
+/*
+ *  typography
+ */
+// default typo (<body>)
+$mmw_t : normal normal 12px  'Trebuchet MS', sans-serif !default;
+  // default text color
+  $mmw_t_color: black !default;
+// titles size
+$mmw_t_title_1:26px !default;
+$mmw_t_title_2:20px !default;
+/*
+ *  colors
+ */
+$mmw_c_1 : #0AF !default;
+$mmw_c_2 : #06C !default;
+/*
+ *  layout
+ */
+$mmw_l_gutter:20px !default; // voir si il y a pas double usage avec omega??? 
+$mmw_l_radius:5px !default;
+
+/*
+ * MIXINs
+ */
+$mmw_path : '/sites/all/libraries/mmw_styles';
+// crée un titre
+@mixin makeMeTitle($m_size:$mmw_t_title_2) {
+  font-size:$m_size;
+}
+// crée un beau lien, couleur et rollover
+@mixin makeMeLink ($m_color:$mmw_c_1) {
+  color:$m_color;
+  text-decoration:none;
+  &:focus {
+    color:$m_color;
+    text-decoration:none;
+    &:hover {
+      text-decoration:underline;
+    }    
+  }
+}
+// crée un lien 'lire la suite'
+@mixin makeMeReadmore($m_color:$mmw_c_1) {
+  @include makeMeLink($m_color);
+  @include makeMePicto('>');
+  margin:1em 0;
+}
+// crée un gradient
+@mixin makeMeGradient($m_c_1:$mmw_c_1, $m_c_2:$mmw_c_2, $m_stop_1:0%, $m_stop_2:100%) {
+  $experimental-support-for-svg: true;
+  background-color:$m_c_1;
+  @include background-image(linear-gradient(top, $m_c_1 $m_stop_1, $m_c_2 $m_stop_2));  
+}
+// crée un tab, avec un petit arrondi au dessus
+@mixin makeMeTab($m_color:$mmw_c_1, $m_radius:$mmw_l_radius, $m_padding:$mmw_l_gutter) {
+  li {
+    @include makeMeGradient();
+    @include border-radius($m_radius $m_radius 0 0);
+    float:left;
+    list-style:none;
+    margin:0 $m_radius 0 0;
+    a, 
+    a:focus {
+     @include makeMeLink($m_color);
+      @include makeMeTitle();
+      display:block;
+      padding:$m_padding;
+    }
+    &.active {
+      background:white;
+      color:$m_color;
+      a, 
+      a:focus {
+        @include makeMeLink();
+      }
+    }
+  }  
+}
+// crée un menu horizontal
+@mixin makeMeMenu() {
+  .menu {
+    li {
+      display:inline-block;
+    }
+    a {
+      @include makeMeLink();
+    }
+  }
+}
+// crée un bouton
+@mixin makeMeButton($m_c:$mmw_c_1, $m_c_t:white, $m_r:$mmw_l_radius) {
+  border:1px solid $m_c;
+  @include border-radius($m_r);  
+  @include makeMeGradient();
+//  @include makeMeLink();
+  @include makeMePicto(',', $m_c_t);
+  color:$m_c_t;
+  padding:$mmw_l_gutter/2 $mmw_l_gutter;
+  a, 
+  a:focus, 
+  a:hover, 
+  &:hover, 
+  &:focus {
+    text-decoration:none;
+  }
+}
+// ajoute un petit picto
+@font-face {
+    font-family: 'ModernPictogramsNormal';
+//    src: local("☺"),  url($mmw_path+'/fonts/modern-pictograms/modernpics-webfont.eot');
+    src: local("☺"),  url($mmw_path+'/fonts/modern-pictograms/modernpics-webfont.eot?#iefix'),
+         url($mmw_path+'/fonts/modern-pictograms/modernpics-webfont.woff') format('woff'),
+         url($mmw_path+'/fonts/modern-pictograms/modernpics-webfont.ttf') format('truetype'),
+         url($mmw_path+'/fonts/modern-pictograms/modernpics-webfont.svg#ModernPictogramsNormal') format('svg');
+    font-weight: normal;
+    font-style: normal; 
+}
+@mixin makeMePicto($m_l:',', $m_c:$mmw_c_1, $m_s:$mmw_t_title_2) {
+  &:before {
+    color:$m_c;
+    content:$m_l;
+    font-family:'ModernPictogramsNormal';
+    font-size:$m_s;
+    margin-right:$mmw_l_gutter/2;
+    position:relative;
+    top:2px;
+  }
+/*  &:hover, 
+  &:link:hover, 
+  &:focus:hover, 
+  &:active:hover {
+    &:before {
+      text-decoration:none;
+    }
+  }*/
+}

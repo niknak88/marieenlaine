@@ -1,0 +1,158 @@
+
+/**
+ * A simple sample carousel skin.
+ *
+ * This skin includes a sample arrows.svg file that may be edited with the free
+ * illustration application InkScape (http://inkscape.org).
+ *
+ * CSS and icons by Nathan Haug.
+ */
+
+$width: 958px;
+$height: 210px;
+$slidewidth: 168px;
+$slideheight: 200px;
+$slidepad: 0 2px 0 0;
+$slideborder: 1px dashed #E0E0E0;
+
+$c1: #df661f; // orange player + read more + border menu
+$c2: #f37e34; // logo + texte orange
+$c3: #3f3f3f; // main menu
+$c4: #b3b3b3; // menu top
+$c5: #373737; // color read more about
+$c6: #d2d2d2; // color border gris clair
+$c7: #833300; // bg back to top:
+
+
+.jcarousel-skin-tennis {
+    text-align: center;
+    margin-bottom:10px;
+  .jcarousel-container-horizontal {
+    width: $width;
+    height: $height;
+    padding: $slidepad;
+    margin: auto;
+  }
+  .jcarousel-container-vertical {
+    width: $height;
+    height: $width;
+    padding: $slidepad;
+    margin: auto;
+  }
+  .jcarousel-clip-horizontal {
+    width: $width;
+    overflow: hidden;
+  }
+  .jcarousel-clip-vertical {
+    height: $width;
+    overflow: hidden;
+  }
+  .jcarousel-item {
+    padding: 0;
+    width: $slidewidth;
+    height: $slideheight;
+    overflow: hidden;
+    border: $slideborder;
+    list-style: none;
+    background: #fff none;
+    .views-field-title{
+      text-transform: uppercase;
+      text-align: center;
+      padding: 0;
+      color: $c1;
+      border-bottom: none;
+      width: $slidewidth;
+      background: none repeat scroll 0 0 rgba(255, 255, 255, 0.7);
+      bottom: 36px;
+      position: relative;
+      a{
+        text-decoration: none;
+        color: $c1;
+        font-size: 20px;
+      }
+    }
+  }
+  .jcarousel-item-horizontal {
+    margin: 0px 2px;
+  }
+  .jcarousel-item-vertical {
+    margin: 4px 0;
+  }
+  .jcarousel-item-placeholder {
+    background: #fff url(../img/throbber.gif) no-repeat center center;
+    color: #000;
+  }
+  .jcarousel-next, .jcarousel-prev {
+  /*
+    display: block;
+    width: 32px;
+    height: 32px;
+    background-image: url(../img/arrows.png); */
+    display: none;
+  }
+  .jcarousel-next-disabled,.jcarousel-prev-disabled {
+    display: none;
+  }
+  .jcarousel-prev-horizontal {
+    position: absolute;
+    top: ceil($height/2);
+    left: 10px;
+    background-position: 0 0;
+  }
+  .jcarousel-prev-horizontal:hover {
+    background-position: -32px 0;
+  }
+  .jcarousel-prev-horizontal:active {
+    background-position: -64px 0;
+  }
+  .jcarousel-next-horizontal {
+    position: absolute;
+    top: 55px;
+    right: 10px;
+    background-position: 0 -32px;
+  }
+  .jcarousel-next-horizontal:hover {
+    background-position: -32px -32px;
+  }
+  .jcarousel-next-horizontal:active {
+    background-position: -64px -32px;
+  }
+  .jcarousel-prev-vertical {
+    position: absolute;
+    top: 10px;
+    left: 55px;
+    background-position: 0 -64px;
+  }
+  .jcarousel-prev-vertical:hover {
+    background-position: -32px -64px;
+  }
+  .jcarousel-prev-vertical:active {
+    background-position: -64px -64px;
+  }
+  .jcarousel-next-vertical {
+    position: absolute;
+    bottom: 10px;
+    left: 55px;
+    background-position: 0 -96px;
+  }
+  .jcarousel-next-vertical:hover {
+    background-position: -32px -96px;
+  }
+  .jcarousel-next-vertical:active {
+    background-position: -64px -96px;
+  }
+  .jcarousel-navigation {
+    margin: 0;
+    padding: 0;
+  }
+  .jcarousel-navigation li {
+    display: inline;
+    margin: 0 2px 0 0;
+    padding: 0;
+    background: none;
+  }
+  .jcarousel-navigation li.active a {
+    font-weight: bold;
+    text-decoration: none;
+  }
+}

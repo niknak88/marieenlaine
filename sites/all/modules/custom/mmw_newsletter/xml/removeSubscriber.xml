@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmlrequest>
+    <username></username>
+    <usertoken></usertoken>
+    <requesttype>subscribers</requesttype>
+    <requestmethod>DeleteSubscriber</requestmethod>
+    <details>
+        <emailaddress></emailaddress>
+        <mailinglist></mailinglist>
+    </details>
+</xmlrequest>

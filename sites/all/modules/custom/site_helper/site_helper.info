@@ -1,0 +1,9 @@
+name = Custom module to Marieenlaine.net
+description = Custom and override hook for marieenlaine.net
+core = 7.x
+package = Customs
+
+version = "7.x-0.1"
+core = "7.x"
+project = "site_helper"
+datestamp = "1344342457"

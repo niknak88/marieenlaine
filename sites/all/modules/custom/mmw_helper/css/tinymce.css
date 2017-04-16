@@ -1,0 +1,22 @@
+body.mceContentBody {
+	font-size: 1em;
+}
+
+img.float-left {
+	float:left;
+	clear:none;
+	margin:0 5px 5px 0;
+}
+img.float-right{
+	float:right;
+	clear:none;
+	margin:0 0 5px 5px;
+}	
+img.center{
+	margin:auto;
+	text-align:center;
+	margin:5px;
+}
+.clearitem {
+	clear:both;
+}

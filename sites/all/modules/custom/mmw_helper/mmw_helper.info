@@ -1,0 +1,7 @@
+name = MakeMeWeb Helper
+package = Makemeweb
+description = A few helpers for MakeMeWeb sites
+core = 7.x
+version = "7.x-1.x-dev"
+configure = admin/config/mmwhelper
+files[] = mmw_helper.module

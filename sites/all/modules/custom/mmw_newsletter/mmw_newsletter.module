@@ -1,0 +1,791 @@
+<?php
+
+/**
+ * mmw_newsletter module for drupal 7
+ * 
+ * @author makemeweb <info@makemeweb.net)>
+ * @version 1.0
+ * 
+ * Create a newsletter content type and synchronize it with interspire api
+ * This module needs a custom xml.php (add a case for sendnewstolist request type)
+ * 
+ * @TODO : harmonize all XML parsing with DOMDocument
+ * @TODO : make default value for synchronized field in content type newsletter
+ * @TODO : make newsletter content type localized
+ * @TODO : create hook to allow custom data fetch for templating
+ */
+include "includes/mmw_newsletter.theme.inc";
+
+/**
+ * Implements hook_views_api().
+ */
+function mmw_newsletter_views_api()
+{
+    return array(
+        'api' => 3,
+        'path' => drupal_get_path('module', 'mmw_newsletter') . "/views",
+    );
+}
+
+/**
+ * Implements hook_block_info
+ * 
+ * @return array
+ */
+function mmw_newsletter_block_info()
+{
+    $blocks = array();
+    $blocks["mmw_newsletter_subscribe_form"] = array(
+        'info' => "Makemeweb Interspire Newsletter Form"
+    );
+    return $blocks;
+}
+
+/**
+ * Implements hook_block_view
+ * 
+ * @param type $delta
+ * @return type
+ */
+function mmw_newsletter_block_view($delta = '')
+{
+    $block = array();
+
+    switch ($delta) {
+        case "mmw_newsletter_subscribe_form":
+            $block["content"] = mmw_newsletter_subscribe_form();
+            break;
+    }
+
+    return $block;
+}
+
+/**
+ * Makemeweb newsletter interspire module
+ * 
+ * @implements hook_menu()
+ *
+ * @return array, the menu items associated to this module
+ */
+function mmw_newsletter_menu()
+{
+    // init
+    $items = array();
+    // page for front-end
+    $items['newsletter/%'] = array(
+        'title' => t("Newsletter"),
+        'description' => 'Newsletter',
+        'page callback' => 'mmw_newsletter_page',
+        'page arguments' => array(1),
+        'access arguments' => array('access content'),
+        'file' => 'includes/mmw_newsletter.theme.inc',
+        'type' => MENU_NORMAL_ITEM,
+    );
+    // Main menu for newsletter (redirect to settings)
+    $items['admin/config/newsletter'] = array(
+        'title' => t("Synchronize newsletter"),
+        'description' => 'Synchronize newsletter',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('mmw_newsletter_form'),
+        'access arguments' => array('administer newsletter'),
+        'type' => MENU_NORMAL_ITEM,
+    );
+    // Settings pagge for newletter module
+    $items['admin/config/newsletter/settings'] = array(
+        'title' => t("Newsletter Settings"),
+        'description' => 'Newsletter settings',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('mmw_newsletter_form'),
+        'access arguments' => array('administer newsletter'),
+        'type' => MENU_LOCAL_TASK,
+    );
+    // Synchronize last newsletter with interspire
+    $items['admin/config/newsletter/synchronize'] = array(
+        'title' => t("Synchronize newsletter"),
+        'description' => 'Synchronize newsletter',
+        'page callback' => 'mmw_newsletter_sync',
+        'access arguments' => array('administer newsletter'),
+        'type' => MENU_LOCAL_TASK,
+    );
+    // Synchronize last newsletter with interspire
+    $items['admin/config/newsletter/update-lists'] = array(
+        'title' => t("Update lists"),
+        'description' => 'Update lists',
+        'page callback' => 'mmw_newsletter_update_lists',
+        'access arguments' => array('administer newsletter'),
+        'type' => MENU_LOCAL_TASK,
+    );
+    // Synchronize last newsletter with interspire
+    $items['admin/config/newsletter/add-scubscriber'] = array(
+        'title' => t("Add subscriber"),
+        'description' => 'Add subscriber',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('mmw_newsletter_add_subscriber'),
+        'access arguments' => array('administer newsletter'),
+        'type' => MENU_LOCAL_TASK,
+    );
+    // Synchronize last newsletter with interspire
+    $items['admin/config/newsletter/remove-scubscriber'] = array(
+        'title' => t("Remove subscriber"),
+        'description' => 'Remove subscriber',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('mmw_newsletter_remove_subscriber'),
+        'access arguments' => array('administer newsletter'),
+        'type' => MENU_LOCAL_TASK,
+    );
+    // Ajax subscribe to newsletter
+    $items['makemeweb-newsletter/subscribe'] = array(
+        'title' => t("Subscribe"),
+        'description' => 'Subscribe',
+        'page callback' => 'mmw_newsletter_add_subscriber_ajax',
+        'page arguments' => array(),
+        'access arguments' => array('access content')
+    );
+    // Ajax subscribe to newsletter
+    $items['makemeweb-newsletter/unsubscribe'] = array(
+        'title' => t("Unsubscribe"),
+        'description' => 'Unsubscribe',
+        'page callback' => 'mmw_newsletter_remove_subscriber_ajax',
+        'page arguments' => array(),
+        'access arguments' => array('access content')
+    );
+    return $items;
+}
+
+/**
+ * Add a permission to administer newsletter settings
+ * 
+ * @return array
+ */
+function mmw_newsletter_permission()
+{
+    return array(
+        'administer newsletter' => array(
+            'title' => t('Administer newsletter'),
+            'description' => t('Perform administration tasks for newsletter'),
+        ),
+    );
+}
+
+/**
+ * Interspire newsletter settings form
+ * 
+ * @param array $form
+ * @param array $form_state
+ * @return type
+ */
+function mmw_newsletter_form($form, &$form_state)
+{
+    // Interspire username to connect
+    $form["mmw_newsletter_username"] = array(
+        "#type" => 'textfield',
+        "#title" => t('Interspire username'),
+        "#default_value" => variable_get("mmw_newsletter_username", ""),
+        "#description" => t("Your interspire username")
+    );
+    // Interspire token to connect
+    $form["mmw_newsletter_userid"] = array(
+        "#type" => 'textfield',
+        "#title" => t('Interspire user id'),
+        "#default_value" => variable_get("mmw_newsletter_userid", ""),
+        "#description" => t("The user id in your interspire system (admin id is usually 1)")
+    );
+    // Interspire token to connect
+    $form["mmw_newsletter_token"] = array(
+        "#type" => 'textfield',
+        "#title" => t('Interspire token'),
+        "#default_value" => variable_get("mmw_newsletter_token", ""),
+        "#description" => t("Your interspire api token for your username")
+    );
+    // Interspire token to connect
+    $form["mmw_newsletter_interspire_url"] = array(
+        "#type" => 'textfield',
+        "#title" => t('Mailer URL'),
+        "#default_value" => variable_get("mmw_newsletter_interspire_url", ""),
+        "#description" => t("Your interspire mailer url")
+    );
+    // Interspire token to connect
+    $form["mmw_newsletter_show_unsubscribe"] = array(
+        "#type" => 'checkbox',
+        "#title" => t('Enable Unsubscribe'),
+        "#default_value" => variable_get("mmw_newsletter_show_unsubscribe", TRUE),
+        "#description" => t("Show the unsubscribe button in subscribe form block")
+    );
+    // Interspire token to connect
+    $form["mmw_newsletter_show_description"] = array(
+        "#type" => 'checkbox',
+        "#title" => t('Enable Description'),
+        "#default_value" => variable_get("mmw_newsletter_show_description", TRUE),
+        "#description" => t("Show the description in subscribe form block")
+    );
+    
+    
+    $response = mmw_newsletter_get_lists();
+    // If status is success proceed
+    if ($response && $response->status == "SUCCESS")
+    {
+        // Foreach list item 
+        foreach ($response->data->item as $item) {
+            // Add new option to list
+            $options[intval($item->listid)] = strval($item->name);
+        }
+        $form["mmw_newsletter_default_list"] = array(
+            "#type" => "select",
+            "#title" => t('Default list'),
+            "#options" => $options,
+            "#description" => t("Select default mailing list user will subscribe to"),
+            "#default_value" => variable_get("mmw_newsletter_default_list", 0),
+            "#required" => FALSE
+        );
+    }
+    
+    // Return system settings form
+    return system_settings_form($form);
+}
+
+/**
+ * Synchronize the last newsletter content with interspire email marketer
+ */
+function mmw_newsletter_sync()
+{
+    // Get all newsletter content type that hasn't been synchronized
+    $nids = mmw_newsletter_find_nodes();
+    // Foreach of these nodes synchronize it with server
+    foreach ($nids as $nid) {
+        // Load xml settings file
+        $xml = DOMDocument::load(realpath(dirname(__FILE__)) . "/xml/sendNewsletter.xml");
+        // Set username and token from configuration
+        $xml->getElementsByTagName("username")->item(0)->nodeValue = variable_get('mmw_newsletter_username');
+        $xml->getElementsByTagName("usertoken")->item(0)->nodeValue = variable_get('mmw_newsletter_token');
+        // Load node
+        $node = node_load($nid);
+        // Bind xml with node values
+        $xml = mmw_newsletter_bind_xml($xml, $node);
+        // Send xml values to server
+        $response = mmw_newsletter_send_request($xml);
+        // if failed set error message
+        if (strval($response->status) == "FAILED")
+        {
+            drupal_set_message(
+                    t("Impossible to synchronize newsletter @title : @error", array(
+                "@error" => strval($response->errormessage),
+                "@title" => $node->title
+                    )), "error"
+            );
+        }
+        // Else set node as sync
+        else
+        {
+            // set message success
+            drupal_set_message(t("Newsletter @title has been synchronized successfully", array(
+                "@title" => $node->title
+            )));
+            // Set node as synchronized
+            $node->field_newsletter_synchronized["und"][0]["value"] = 1;
+            node_save($node);
+        }
+    }
+    // If there is no newsletter to synchronize set a success message
+    if (count($nids) == 0)
+    {
+        drupal_set_message(t("There is no newsletter to synchronize"));
+    }
+    return "";
+}
+
+/**
+ * Send the xml request to the interspire server
+ * 
+ * @param DOMDocument $xml, the xml content to send
+ */
+function mmw_newsletter_send_request(DOMDocument $xml)
+{
+    $ch = curl_init(variable_get("mmw_newsletter_interspire_url") . "/xml.php");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $xml->saveXML());
+    $result = curl_exec($ch);
+    $response = simplexml_load_string($result);
+    return $response;
+}
+
+/**
+ * Fetch all newsletter nids that hasn't been synchronized with interspire
+ * 
+ * @return array
+ */
+function mmw_newsletter_find_nodes()
+{
+    // Init
+    $nids = array();
+    // SQL query to fetch all newsletter nodes not synchronized yet
+    $sql = <<<SQL
+        SELECT * FROM node node
+        LEFT JOIN field_data_field_newsletter_synchronized sync ON node.nid = sync.entity_id
+        WHERE node.type = 'newsletter'
+        AND node.status = 1
+        AND sync.field_newsletter_synchronized_value <> 1 
+SQL;
+    // Get results
+    $results = db_query($sql);
+    // Foreach nodes in results bind array
+    while ($row = $results->fetch()) {
+        $nids[] = $row->nid;
+    }
+    // return all nids
+    return $nids;
+}
+
+/**
+ * Bind XML with values from node and list config
+ * 
+ * @global string $base_url
+ * @param DOMDocument $xml, the xml to bind
+ * @param stdClass $node, the node to send
+ * @return \DOMDocument, the xml object with all datas
+ */
+function mmw_newsletter_bind_xml(DOMDocument $xml, $node)
+{
+    $selectedList = FALSE;
+    $listId = field_get_items("node", $node, "field_newsletter_list");
+    $lists = mmw_newsletter_get_lists();
+    if ($lists->status == "SUCCESS")
+    {
+        foreach ($lists->data->item as $item) {
+            if (intval($item) == intval($listId[0]["value"]))
+            {
+                $selectedList = $item;
+            }
+        }
+    }
+    global $base_url;
+    // Get content
+    $htmlContent = file_get_contents($base_url . "/". $node->language ."/newsletter/" . $node->nid);
+    // Bind from node
+    $xml->getElementsByTagName("subject")->item(0)->nodeValue = $node->title;
+    $xml->getElementsByTagName("name")->item(0)->nodeValue = $node->title;
+    $xml->getElementsByTagName("htmlbody")->item(0)->appendChild($xml->createCDATASection($htmlContent));
+    $xml->getElementsByTagName("textbody")->item(0)->appendChild($xml->createCDATASection(strip_tags($htmlContent)));
+    $xml->getElementsByTagName("listid")->item(0)->nodeValue = $listId[0]["value"];
+    // bind from settings
+    $xml->getElementsByTagName("ownerid")->item(0)->nodeValue = intval($item->ownerid);
+    $xml->getElementsByTagName("SendFromName")->item(0)->nodeValue = strval($item->ownername);
+    $xml->getElementsByTagName("SendFromEmail")->item(0)->nodeValue = strval($item->ownermail);
+    $xml->getElementsByTagName("ReplyToEmail")->item(0)->nodeValue = strval($item->replytoemail);
+    $xml->getElementsByTagName("BounceEmail")->item(0)->nodeValue = strval($item->bounceemail);
+    $xml->getElementsByTagName("SendStartTime")->item(0)->nodeValue = time() + 6000;
+    // return DOM object
+    return $xml;
+}
+
+/**
+ * Update newsletter available lists for the user set in config
+ * 
+ * @return string
+ */
+function mmw_newsletter_update_lists()
+{
+    $options = array();
+    // Get all lists available
+    $response = mmw_newsletter_get_lists();
+    // If status is success proceed
+    if ($response->status == "SUCCESS")
+    {
+        // Foreach list item 
+        foreach ($response->data->item as $item) {
+            // Add new option to list
+            $options[intval($item->listid)] = strval($item->name);
+        }
+        // Get field config and update the available options
+        $sql = "SELECT id, data FROM {field_config} WHERE field_name = 'field_newsletter_list'";
+        $result = db_query($sql);
+        $row = $result->fetchObject();
+        $config = unserialize($row->data);
+        $config["settings"]["allowed_values"] = $options;
+        $update = "UPDATE {field_config} SET data = :datas WHERE field_name = 'field_newsletter_list'";
+        db_query($update, array(":datas" => serialize($config)));
+        // Flush all caches and set a success message
+        drupal_flush_all_caches();
+        drupal_set_message("Your newsletter's list have been updated");
+    }
+    // Set error message
+    else
+    {
+        drupal_set_message(
+                t("Impossible to synchronize lists : @error", array(
+            "@error" => $response->getElementsByTagName("errormessage")->item(0)->nodeValue,
+                )), "error"
+        );
+    }
+    return "";
+}
+
+/**
+ * Get lists from interspire server
+ * 
+ * @return SimpleXMLElement
+ */
+function mmw_newsletter_get_lists()
+{
+    // Get username set in config
+    $username = variable_get('mmw_newsletter_username');
+    // Get XML to get Lists
+    $xml = DOMDocument::load(realpath(dirname(__FILE__)) . "/xml/getLists.xml");
+    // Bind xml username and token
+    $xml->getElementsByTagName("username")->item(0)->nodeValue = $username;
+    $xml->getElementsByTagName("usertoken")->item(0)->nodeValue = variable_get("mmw_newsletter_token");
+    $xml->getElementsByTagName("userid")->item(0)->nodeValue = variable_get("mmw_newsletter_userid");
+    // Send xml
+    $response = mmw_newsletter_send_request($xml);
+    return $response;
+}
+
+/**
+ * Add subscriber to list form
+ * 
+ * @param type $form
+ * @param type $form_state
+ * @return string
+ */
+function mmw_newsletter_add_subscriber($form, &$form_state)
+{
+    // get newsletter list
+    $options = array();
+    $lists = mmw_newsletter_get_lists();
+    // If status is success proceed
+    if ($lists->status == "SUCCESS")
+    {
+        // Foreach list item 
+        foreach ($lists->data->item as $item) {
+            // Add new option to list
+            $options[intval($item->listid)] = strval($item->name);
+        }
+    }
+    // List options
+    $form["lists"] = array(
+        "#type" => "select",
+        "#title" => t('Lists'),
+        "#options" => $options,
+        "#description" => t("Select the mailing list")
+    );
+    // Email adress
+    $form["mmw_newsletter_email"] = array(
+        "#type" => 'textfield',
+        "#title" => t('Subscriber email'),
+        "#default_value" => "",
+        "#description" => t("The email address to add to list")
+    );
+    // Lastname
+    $form["mmw_newsletter_lastname"] = array(
+        "#type" => 'textfield',
+        "#title" => t('Subscriber lastname'),
+        "#default_value" => "",
+        "#description" => t("The lastname to add to list")
+    );
+    // Firstname
+    $form["mmw_newsletter_firstname"] = array(
+        "#type" => 'textfield',
+        "#title" => t('Subscriber firstname'),
+        "#default_value" => "",
+        "#description" => t("The firstname to add to list")
+    );
+    // Firstname
+    $form["mmw_newsletter_language"] = array(
+        "#type" => 'textfield',
+        "#title" => t('Language'),
+        "#default_value" => "",
+        "#description" => t("The language of the user")
+    );
+    // Phone number
+    $form["mmw_newsletter_phone"] = array(
+        "#type" => 'textfield',
+        "#title" => t('Subscriber phone'),
+        "#default_value" => "",
+        "#description" => t("The phone number to add to list")
+    );
+    // form custom validation
+    $form["#validate"][] = "mmw_newsletter_validate_email";
+    // Form submit callback and button
+    $form["#submit"][] = "mmw_newsletter_sync_subscriber";
+    $form["submit"] = array(
+        "#type" => "submit",
+        "#value" => "Add"
+    );
+    return $form;
+}
+
+/**
+ * Validate email adress from the subscriber form (add or delete)
+ * 
+ * @param type $form
+ * @param type $form_state
+ */
+function mmw_newsletter_validate_email($form, &$form_state)
+{
+    $email = $form_state["values"]["mmw_newsletter_email"];
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL))
+    {
+        form_set_error("email", t("This email is not valid"));
+    }
+}
+
+/**
+ * Callback from add subscriber form
+ * 
+ * Send subscriber email to server to add it to the selected list
+ * 
+ * @param type $form
+ * @param type $form_state
+ */
+function mmw_newsletter_sync_subscriber($form, &$form_state)
+{
+    $email = $form_state["values"]["mmw_newsletter_email"];
+    $lastname = $form_state["values"]["mmw_newsletter_lastname"];
+    $firstname = $form_state["values"]["mmw_newsletter_firstname"];
+    $phone = $form_state["values"]["mmw_newsletter_phone"];
+    $language = $form_state["values"]["mmw_newsletter_language"];
+    
+    $listId = $form_state["values"]["lists"];
+    // Get username set in config
+    $username = variable_get('mmw_newsletter_username');
+    // Get XML to get Lists
+    $xml = DOMDocument::load(realpath(dirname(__FILE__)) . "/xml/addSubscriber.xml");
+    // Bind xml username and token
+    $xml->getElementsByTagName("username")->item(0)->nodeValue = $username;
+    $xml->getElementsByTagName("usertoken")->item(0)->nodeValue = variable_get("mmw_newsletter_token");
+    $xml->getElementsByTagName("mailinglist")->item(0)->nodeValue = $listId;
+    $xml->getElementsByTagName("emailaddress")->item(0)->nodeValue = $email;
+    
+    $xml->getElementsByTagName("value")->item(0)->nodeValue = $lastname;
+    $xml->getElementsByTagName("value")->item(1)->nodeValue = $firstname;
+    $xml->getElementsByTagName("value")->item(2)->nodeValue = $phone;
+    $xml->getElementsByTagName("value")->item(3)->nodeValue = $language;
+    $xml->getElementsByTagName("value")->item(4)->nodeValue = $language;
+    // Send xml
+    $response = mmw_newsletter_send_request($xml);
+    if ($response->status == "SUCCESS")
+    {
+        drupal_set_message(t("@email has been added to your list", array("@email" => $email)));
+    }
+    else
+    {
+        drupal_set_message(t("Impossible to add @email : @error", array(
+            "@email" => $email,
+            "@error" => $response->errormessage
+                )), "error");
+    }
+}
+
+/**
+ * Form to remove a subscriber from a list
+ * 
+ * @param type $form
+ * @param type $form_state
+ * @return string
+ */
+function mmw_newsletter_remove_subscriber($form, &$form_state)
+{
+    // get newsletter list
+    $options = array();
+    $lists = mmw_newsletter_get_lists();
+    // If status is success proceed
+    if ($lists->status == "SUCCESS")
+    {
+        // Foreach list item 
+        foreach ($lists->data->item as $item) {
+            // Add new option to list
+            $options[intval($item->listid)] = strval($item->name);
+        }
+    }
+    $form["lists"] = array(
+        "#type" => "select",
+        "#title" => t('Lists'),
+        "#options" => $options,
+        "#description" => t("Select the mailing list")
+    );
+    // Interspire username to connect
+    $form["mmw_newsletter_email"] = array(
+        "#type" => 'textfield',
+        "#title" => t('Subscriber email'),
+        "#default_value" => "",
+        "#description" => t("The email address to add to list")
+    );
+    $form["#validate"][] = "mmw_newsletter_validate_email";
+    $form["#submit"][] = "mmw_newsletter_sync_remove_subscriber";
+    $form["submit"] = array(
+        "#type" => "submit",
+        "#value" => "Remove"
+    );
+    return $form;
+}
+
+/**
+ * Callback for remove subscriber form
+ * 
+ * Send request to server to delete user from list
+ * 
+ * @param type $form
+ * @param type $form_state
+ */
+function mmw_newsletter_sync_remove_subscriber($form, &$form_state)
+{
+    $email = $form_state["values"]["mmw_newsletter_email"];
+    $listId = $form_state["values"]["lists"];
+    // Get username set in config
+    $username = variable_get('mmw_newsletter_username');
+    // Get XML to get Lists
+    $xml = DOMDocument::load(realpath(dirname(__FILE__)) . "/xml/removeSubscriber.xml");
+    // Bind xml username and token
+    $xml->getElementsByTagName("username")->item(0)->nodeValue = $username;
+    $xml->getElementsByTagName("usertoken")->item(0)->nodeValue = variable_get("mmw_newsletter_token");
+    $xml->getElementsByTagName("mailinglist")->item(0)->nodeValue = $listId;
+    $xml->getElementsByTagName("emailaddress")->item(0)->nodeValue = $email;
+    // Send xml
+    $response = mmw_newsletter_send_request($xml);
+    if ($response->status == "SUCCESS")
+    {
+        drupal_set_message(t("@email has been deleted from your list", array("@email" => $email)));
+    }
+    else
+    {
+        drupal_set_message(t("Impossible to delete @email : @error", array(
+            "@email" => $email,
+            "@error" => $response->errormessage
+                )), "error");
+    }
+}
+
+/**
+ * Return subscribe form
+ * 
+ * @return type
+ */
+function mmw_newsletter_subscribe_form()
+{
+    return theme("mmw_newsletter_subscribe_form", array());
+}
+
+/**
+ * Ajax form submit to add an email to a list (from a custom block)
+ * 
+ * @return json
+ */
+function mmw_newsletter_add_subscriber_ajax()
+{
+    global $language;
+    $datas = array();
+    $email = $_POST["email"];
+    $langcode = $language->language;
+    if (filter_var($email, FILTER_VALIDATE_EMAIL))
+    {
+        $datas["status"] = "OK";
+        //$listId = $form_state["values"]["lists"];
+        // Get username set in config
+        $username = variable_get('mmw_newsletter_username');
+        // Get XML to get Lists
+        $xml = DOMDocument::load(realpath(dirname(__FILE__)) . "/xml/addSubscriber.xml");
+        // Bind xml username and token
+        $xml->getElementsByTagName("username")->item(0)->nodeValue = $username;
+        $xml->getElementsByTagName("usertoken")->item(0)->nodeValue = variable_get("mmw_newsletter_token");
+        $xml->getElementsByTagName("mailinglist")->item(0)->nodeValue = variable_get("mmw_newsletter_default_list", "");
+        $xml->getElementsByTagName("emailaddress")->item(0)->nodeValue = $email;
+        $xml->getElementsByTagName("value")->item(0)->nodeValue = "";
+        $xml->getElementsByTagName("value")->item(1)->nodeValue = "";
+        $xml->getElementsByTagName("value")->item(2)->nodeValue = "";
+        $xml->getElementsByTagName("value")->item(3)->nodeValue = strtoupper($langcode);
+        $xml->getElementsByTagName("value")->item(4)->nodeValue = strtoupper($langcode);
+        $xml->getElementsByTagName("value")->item(5)->nodeValue = "patients";
+        // Send xml
+        $response = mmw_newsletter_send_request($xml);
+        if ($response->status == "SUCCESS")
+        {
+            $datas["message"] = t('Votre email a été ajouté à notre liste');
+        }
+        else
+        {
+            $datas["message"] = t("Impossible to add @email : @error", array(
+                "@email" => $email,
+                "@error" => $response->errormessage
+            ));
+        }
+    }
+    else
+    {
+        $datas["status"] = "KO";
+        $datas["message"] = t('Your email is not valid');
+    }
+    return drupal_json_output($datas);
+}
+
+/**
+ * Ajax form submit to remove an email to a list (from a custom block)
+ * 
+ * @return json
+ */
+function mmw_newsletter_remove_subscriber_ajax()
+{
+    $datas = array();
+    $email = $_POST["email"];
+    if (filter_var($email, FILTER_VALIDATE_EMAIL))
+    {
+        $datas["status"] = "OK";
+        //$listId = $form_state["values"]["lists"];
+        // Get username set in config
+        $username = variable_get('mmw_newsletter_username');
+        // Get XML to get Lists
+        $xml = DOMDocument::load(realpath(dirname(__FILE__)) . "/xml/removeSubscriber.xml");
+        // Bind xml username and token
+        $xml->getElementsByTagName("username")->item(0)->nodeValue = $username;
+        $xml->getElementsByTagName("usertoken")->item(0)->nodeValue = variable_get("mmw_newsletter_token");
+        $xml->getElementsByTagName("mailinglist")->item(0)->nodeValue = variable_get("mmw_newsletter_default_list", "");
+        $xml->getElementsByTagName("emailaddress")->item(0)->nodeValue = $email;
+        // Send xml
+        $response = mmw_newsletter_send_request($xml);
+        if ($response->status == "SUCCESS")
+        {
+            $datas["message"] = t('Votre email a été supprimé de notre liste');
+        }
+        else
+        {
+            $datas["message"] = t("Impossible to delete @email : @error", array(
+                "@email" => $email,
+                "@error" => $response->errormessage
+            ));
+        }
+    }
+    else
+    {
+        $datas["status"] = "KO";
+        $datas["message"] = t('Your email is not valid');
+    }
+    return drupal_json_output($datas);
+}
+
+/**
+ * Add a new subcriber from outside the form
+ * 
+ * @param type $email
+ */
+function mmw_newsletter_new_subscriber($email)
+{  
+    $listId = variable_get("mmw_newsletter_default_list", 0);
+    // Get username set in config
+    $username = variable_get('mmw_newsletter_username');
+    // Get XML to get Lists
+    $xml = DOMDocument::load(realpath(dirname(__FILE__)) . "/xml/addSubscriber.xml");
+    // Bind xml username and token
+    $xml->getElementsByTagName("username")->item(0)->nodeValue = $username;
+    $xml->getElementsByTagName("usertoken")->item(0)->nodeValue = variable_get("mmw_newsletter_token");
+    $xml->getElementsByTagName("mailinglist")->item(0)->nodeValue = $listId;
+    $xml->getElementsByTagName("emailaddress")->item(0)->nodeValue = $email;
+    // Send xml
+    $response = mmw_newsletter_send_request($xml);
+    if ($response->status == "SUCCESS")
+    {
+        return FALSE;
+    }
+    else
+    {
+        return $response->errormessage;
+    }
+}

@@ -1,0 +1,168 @@
+/**
+ * A simple sample carousel skin.
+ *
+ * This skin includes a sample arrows.svg file that may be edited with the free
+ * illustration application InkScape (http://inkscape.org).
+ *
+ * CSS and icons by Nathan Haug.
+ */
+/* line 27, ../sass/tennis.scss */
+.jcarousel-skin-tennis {
+  text-align: center;
+  margin-bottom: 10px;
+}
+/* line 30, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-container-horizontal {
+  width: 958px;
+  height: 210px;
+  padding: 0 2px 0 0;
+  margin: auto;
+}
+/* line 36, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-container-vertical {
+  width: 210px;
+  height: 958px;
+  padding: 0 2px 0 0;
+  margin: auto;
+}
+/* line 42, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-clip-horizontal {
+  width: 958px;
+  overflow: hidden;
+}
+/* line 46, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-clip-vertical {
+  height: 958px;
+  overflow: hidden;
+}
+/* line 50, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-item {
+  padding: 0;
+  width: 168px;
+  height: 200px;
+  overflow: hidden;
+  border: 1px dashed #e0e0e0;
+  list-style: none;
+  background: white none;
+}
+/* line 58, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-item .views-field-title {
+  text-transform: uppercase;
+  text-align: center;
+  padding: 0;
+  color: #df661f;
+  border-bottom: none;
+  width: 168px;
+  background: none repeat scroll 0 0 rgba(255, 255, 255, 0.7);
+  bottom: 36px;
+  position: relative;
+}
+/* line 68, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-item .views-field-title a {
+  text-decoration: none;
+  color: #df661f;
+  font-size: 20px;
+}
+/* line 75, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-item-horizontal {
+  margin: 0px 2px;
+}
+/* line 78, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-item-vertical {
+  margin: 4px 0;
+}
+/* line 81, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-item-placeholder {
+  background: white url(../img/throbber.gif) no-repeat center center;
+  color: #000;
+}
+/* line 85, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-next, .jcarousel-skin-tennis .jcarousel-prev {
+  /*
+    display: block;
+    width: 32px;
+    height: 32px;
+    background-image: url(../img/arrows.png); */
+  display: none;
+}
+/* line 93, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-next-disabled, .jcarousel-skin-tennis .jcarousel-prev-disabled {
+  display: none;
+}
+/* line 96, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-prev-horizontal {
+  position: absolute;
+  top: 105px;
+  left: 10px;
+  background-position: 0 0;
+}
+/* line 102, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-prev-horizontal:hover {
+  background-position: -32px 0;
+}
+/* line 105, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-prev-horizontal:active {
+  background-position: -64px 0;
+}
+/* line 108, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-next-horizontal {
+  position: absolute;
+  top: 55px;
+  right: 10px;
+  background-position: 0 -32px;
+}
+/* line 114, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-next-horizontal:hover {
+  background-position: -32px -32px;
+}
+/* line 117, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-next-horizontal:active {
+  background-position: -64px -32px;
+}
+/* line 120, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-prev-vertical {
+  position: absolute;
+  top: 10px;
+  left: 55px;
+  background-position: 0 -64px;
+}
+/* line 126, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-prev-vertical:hover {
+  background-position: -32px -64px;
+}
+/* line 129, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-prev-vertical:active {
+  background-position: -64px -64px;
+}
+/* line 132, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-next-vertical {
+  position: absolute;
+  bottom: 10px;
+  left: 55px;
+  background-position: 0 -96px;
+}
+/* line 138, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-next-vertical:hover {
+  background-position: -32px -96px;
+}
+/* line 141, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-next-vertical:active {
+  background-position: -64px -96px;
+}
+/* line 144, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-navigation {
+  margin: 0;
+  padding: 0;
+}
+/* line 148, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-navigation li {
+  display: inline;
+  margin: 0 2px 0 0;
+  padding: 0;
+  background: none;
+}
+/* line 154, ../sass/tennis.scss */
+.jcarousel-skin-tennis .jcarousel-navigation li.active a {
+  font-weight: bold;
+  text-decoration: none;
+}

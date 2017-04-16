@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmlrequest>
+    <username></username>
+    <usertoken></usertoken>
+    <requesttype>user</requesttype>
+    <requestmethod>sendnewstolist</requestmethod>
+    <details>     
+        <subject></subject>
+        <htmlbody></htmlbody>  
+        <textbody></textbody>
+        <name></name>
+        <ownerid></ownerid>
+        <listid></listid>
+        <SendFromName></SendFromName>
+        <SendFromEmail></SendFromEmail>
+        <ReplyToEmail></ReplyToEmail>
+        <BounceEmail></BounceEmail>
+        <SendStartTime></SendStartTime>
+        <DontSend>1</DontSend>
+    </details>
+</xmlrequest>
